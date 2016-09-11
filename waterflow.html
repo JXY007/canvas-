@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<style type="text/css">
+			*{
+				padding: 0;
+				margin: 0;
+			}
+			body{
+				background: #000;
+			}
+			#container{
+				width: 500px;
+				height: 500px;
+				margin: 50px 0 0 450px;
+				box-shadow: inset #3C3C3C 0 1px ;
+			}
+			#canvas{
+				display: block;
+				margin: 0 auto;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="container">
+			<canvas id="canvas" ></canvas>
+		</div>
+		<script type="text/javascript">
+		
+			//  ========== 
+			//  = 开始封装 = 
+			//  ========== 
+			var waterFul=function(c,cw,ch){
+				//瀑布的全局变量
+				this.canvas=c;
+				this.cw=cw;
+				this.ch=ch;
+				this.gravity=0.15;
+				this.context=this.canvas.getContext('2d');
+				this.ParticleRate=10;
+				this.particles=[];
+				var _this=this;
+				//工具函数,产生指定范围的随机数
+				this.rand=function(minN,maxN){
+					return ~~((Math.random()*(maxN-minN+1))+minN);
+				}
+				//初始化函数
+				this.init=function(){
+					this.loop();
+				}
+				//水流类
+				this.Particle=function(){
+					var newWidth=_this.rand(4,20);
+					var newHeight=_this.rand(10,45);
+					this.width=newWidth;
+					this.height=newHeight;
+					this.x=_this.rand(10,_this.cw-10);
+					this.y=-newHeight;
+					this.vx=0;
+					this.vy=0;
+					//三原色,即瀑布的颜色调配
+					this.hue = _this.rand(200, 220);
+					this.saturation = _this.rand(30, 60);
+					this.lightness = _this.rand(30, 60);
+				}
+				//为对象扩展方法，绘制水流
+				this.Particle.prototype.render=function(){
+					//初始化水流的颜色
+					_this.context.strokeStyle='hsla('+this.hue+', '+this.saturation+'%, '+this.lightness+'%, .05)';
+					//开启绘制路径
+					_this.context.beginPath();
+					//将画笔移动至初始化坐标位置处
+					_this.context.moveTo(this.x,this.y);
+					//绘制水流线条
+					_this.context.lineTo(this.x,this.y+this.height);
+					//设置线条的宽度
+					_this.context.lineWidth=this.width/2;
+					//设置线条以圆形绘制
+					_this.context.lineCap="round";
+					//启动绘制
+					_this.context.stroke();
+					//关闭路绘制路径
+					_this.context.closePath();
+				}
+				//更新水流的y轴方向的位置
+				this.Particle.prototype.update=function(){
+					this.vx+=this.vx;
+					this.vy+=_this.gravity;
+					this.x+=this.vx;
+					this.y+=this.vy;
+				}
+				//生成泡沫
+				this.Particle.prototype.createBubble=function(){
+					_this.context.fillStyle='hsla('+this.hue+', '+this.saturation+'%, '+this.lightness+'%, .3)';
+					_this.context.beginPath();
+					_this.context.arc(this.x,_this.ch-10,_this.rand(5,10),0,Math.PI*2,true);
+					_this.context.fill();
+				}
+				//  ========== 
+				//  = 破布控制方法 = 
+				//  ========== 
+				
+				//初始化水流对象
+				this.createParticle=function(){
+					var i=this.ParticleRate;
+					while (i--){
+						this.particles.push(new this.Particle());
+					}
+				}
+				//绘制水流的方法
+				this.particleRender=function(){
+					var i=this.particles.length;
+					while (i--){
+						var p=this.particles[i];
+						p.render();
+					}
+				}
+				//水流位置更新方法
+				this.particleUpdate=function(){
+					var i=this.particles.length;
+					while (i--){
+						var p=this.particles[i];
+						p.update();
+					}
+				}
+				//水流边界判断处理
+				this.removeParticle=function(){
+					var i=this.particles.length;
+					while (i--){
+						var p=this.particles[i];
+						if (p.y>this.ch-15) {
+							//绘制泡沫
+							//  ========== 
+							//  = 泡沫 = 
+							p.createBubble();
+							//  ========== 
+							this.particles.splice(i,1);
+						}
+					}
+				}
+				//画布清除函数
+				this.clearCanvas=function(){
+					this.context.globalCompositeOperation='destination-out';
+					this.context.fillStyle= 'rgba(255,255,255,.1)';
+					this.context.fillRect(0,0,this.cw,this.ch);
+					this.context.globalCompositeOperation='lighter';
+					this.context.fill();
+				}
+				//循环调用
+				this.loop=function(){
+					function loopIt(){
+						requestAnimationFrame(loopIt);
+						_this.clearCanvas();
+						_this.createParticle();
+						_this.particleRender();
+						_this.particleUpdate();
+						_this.removeParticle();
+					}
+					loopIt();
+				}
+			}
+			
+			//  ========== 
+			//  = 调用 = 
+			//  ========== 
+			var canvas=document.getElementById("canvas");
+			canvas.width=150;
+			canvas.height=450;
+			var water1=new waterFul(canvas,150,450);
+			water1.init();
+		</script>
+	</body>
+</html>

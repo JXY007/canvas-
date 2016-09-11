@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>模拟烟花</title>
+		<style type="text/css">
+			*{
+				padding: 0;
+				margin: 0;
+			}
+			#canvas{
+				background: #000;
+				display: block;
+			}
+		</style>
+	</head>
+	<body>
+		<canvas id="canvas" ></canvas>
+		<script type="text/javascript">
+			var canvas=document.getElementById("canvas");
+			var context=canvas.getContext('2d');
+			var cw=canvas.width=window.innerWidth;
+			var ch=canvas.height=window.innerHeight;
+			//存储fire对象的数组
+			var fireArr=[];
+			//存储flower的数组
+			var prarticles=[];
+			//工具，用与返回给定两个数范围的随机数
+			function rand(minN,maxN){
+				return ~~((Math.random()*(maxN-minN+1))+minN);
+			}
+			function randInt(minN,maxN){
+				return ((Math.random()*(maxN-minN+1))+minN);
+			}
+			//f返回两个点之间的距离
+			function travelDistance(sx,sy,tx,ty){
+				var Xinstance=tx-sx;
+				var Yinstance=ty-sy;
+				return Math.sqrt(Math.pow(Xinstance,2)+Math.pow(Yinstance,2));
+			}
+			//烟花对象
+			function FireWork(sx,sy,tx,ty){
+				//起始位置
+				this.x=sy;
+				this.y=sy;
+				//在第一次初始化时担当数据缓存的作用
+				this.sx=sx;
+				this.sy=sy;
+				//目标位置
+				this.tx=tx;
+				this.ty=ty;
+				//计算两点之间的距离
+				this.distanceTarget=travelDistance(sy,sy,tx,ty);
+				//计算出两点之间的连线与x轴的夹角
+				this.angle=Math.atan2(ty-sy,tx-sx);
+				//配置随机颜色
+				this.hue=rand(0,360);
+				this.brightness = rand( 50, 70 );
+				//初始化烟花移动的距离
+				this.distanceTravel=0;
+				//生成一个用于保存烟花移动位置的数组
+				this.coordinates=[];
+				//设置一共保存到的位置数量
+				this.coordinatesCount=3;
+				while (this.coordinatesCount--){
+					this.coordinates.push([this.x,this.y]);
+				}
+				//初始化移动速度
+				this.speed=3;
+				//初始化加速度
+				this.acceleration = 1.05;
+			}
+			//数据更新
+			FireWork.prototype.updata=function(index){
+				//从index=0出移除一个元素
+				this.coordinates.pop();
+				//将更新的位置unshift到数组中
+				this.coordinates.unshift([this.x,this.y]);
+				//更新速度
+				this.speed*=this.acceleration;
+				//计算x轴和y轴的速度
+				var vx=this.speed* Math.cos(this.angle);
+				var vy=this.speed*Math.sin(this.angle);
+				//计算当前烟花的位置与起点的位置
+				this.distanceTravel=travelDistance(this.sx,this.sy,this.x+vx,this.y+vy);
+				this.x+=vx;
+				this.y+=vy;
+			}
+			//绘制烟花函数
+			FireWork.prototype.draw=function(){
+				context.beginPath();
+				//将画笔移动至数组记录的位置
+				context.moveTo(this.coordinates[this.coordinates.length-1][0],this.coordinates[this.coordinates.length-1][1]);
+				//绘制到当前更新的位置
+				context.lineTo(this.x,this.y);
+				//设置绘制烟花的填充颜色
+				context.strokeStyle = context.strokeStyle = 'hsl(' + this.hue + ', 100%, ' + this.brightness + '%)';
+				//开始绘制
+				context.stroke();
+				context.closePath();
+			}
+			////////
+			//firework操作函数
+			function init(){
+				if (fireArr.length<20) {
+					fireArr.push(new FireWork(cw/2,ch-5,rand(0,cw-50),ch/3));
+				}
+			}
+			function drawline(){
+				context.clearRect(0,0,cw,ch);
+				var len=fireArr.length;
+				while (len--){
+					fireArr[len].draw();
+				}
+				var plen=prarticles.length;
+				while (plen--){
+					prarticles[plen].draw();
+					prarticles[plen].updata(plen);
+				}
+			}
+			function fireJudge(){
+				var len=fireArr.length;
+				while (len--){
+					if (fireArr[len].distanceTravel>=fireArr[len].distanceTarget) {
+						createParticle(fireArr[len].tx,fireArr[len].ty);
+						fireArr.splice(len,1);
+					}
+				}
+			}
+			function fireUpdata(){
+				var len=fireArr.length;
+				while (len--){
+					fireArr[len].updata();
+				}
+			}
+			
+			function goplay(){
+				requestAnimationFrame(goplay);
+				init();
+				drawline();
+				fireUpdata();
+				fireJudge()
+			}
+			goplay();
+			////////////////////////////////
+			function Particle(tx,ty){
+				this.x=tx;
+				this.y=ty;
+				this.coordinates=[];
+				this.coordinatesCount=5;
+				while (this.coordinatesCount--){
+					this.coordinates.push([this.x,this.y]);
+				}
+				this.angle=randInt(0,Math.PI*2);
+				this.speed=rand(1,10);
+				this.gravity=1;
+				//每一个Particle对象的颜色
+				this.hue=rand(0,360);
+				this.brightness = rand( 50, 70 );
+				this.alpha = 1;
+				//透明度递减量
+				//this.decay=randInt(0.015, 0.03);
+				this.decay=0.01;
+				this.friction=0.95;
+			}
+			Particle.prototype.updata=function(index){
+				this.coordinates.pop();
+				this.coordinates.unshift([this.x,this.y]);
+				this.speed*=this.friction;
+
+				this.x += Math.cos( this.angle ) * this.speed;
+				this.y += Math.sin( this.angle ) * this.speed + this.gravity;
+				this.alpha -= this.decay;
+				if( this.alpha <= this.decay ) {
+					prarticles.splice(index, 1);
+				}
+			}
+			Particle.prototype.draw=function(){
+				context.beginPath();
+				context.moveTo(this.coordinates[this.coordinates.length-1][0],this.coordinates[this.coordinates.length-1][1]);
+				context.lineTo(this.x,this.y);
+				context.strokeStyle='hsla(' + this.hue + ', 100%, ' + this.brightness + '%, ' + this.alpha + ')';
+				context.lineWidth=2;
+				context.stroke();
+				context.closePath();
+			}
+			//flower操作函数
+			function createParticle(x,y){
+				var num=50;
+				while (num--){
+					prarticles.push(new Particle(x,y));	
+				}
+			}
+			///////////////////////////////////////////////////////////////fireWork封装
+			
+//			var canvas=document.getElementById("canvas");
+//			fireWork.init(canvas);
+		</script>
+	</body>
+</html>
