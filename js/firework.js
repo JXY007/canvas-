@@ -71,8 +71,6 @@ var fireWork = (function() {
 		Fire.prototype.updata = function() {
 				//将coordinates数组中的第一个位置的数据删除
 				this.coordinates.pop();
-				//向coordinates中插入最新的数据
-				this.coordinates.unshift([this.x, this.y]);
 				//更新速度
 				this.speed *= this.friction;
 				//计算水平和垂直方向的速度
@@ -81,6 +79,8 @@ var fireWork = (function() {
 				//改变位置
 				this.x += vx;
 				this.y += vy;
+				//向coordinates中插入最新的数据
+				this.coordinates.unshift([this.x, this.y]);
 				//计算当前位置与原始点之间的距离
 				this.travelDist = travelDistance(this.sx, this.sy, this.x, this.y);
 			}

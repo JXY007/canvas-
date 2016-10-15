@@ -29,7 +29,7 @@
 				//  = 开始画点 = 
 				//  ========== 
 				var line=[];//用于存放点的信息
-				var num =10;//设置点的个数
+				var num =20;//设置点的个数
 				var oldpoint=[];//用于保存前面点的轨迹
 				//工具函数，用于产生戈丁范围的随机数
 				function rnd(n,m){
@@ -59,7 +59,7 @@
 					context.lineTo(line[i].x,line[i].y);
 				}
 				//为线条设置颜色
-				context.strokeStyle="rgba(33,183,243,1)";
+				context.strokeStyle="rgba(rgba(169,18,144,1)";
 				context.closePath();//闭合线条
 				context.stroke();
 			 }
@@ -105,7 +105,7 @@
 			 		}
 			 		context.closePath();
 			 		var opacity=i/oldpoint.length;
-			 		context.strokeStyle="rgba(33,183,243,"+opacity+")";
+			 		context.strokeStyle="rgba(169,18,144,"+opacity+")";
 			 		context.stroke();
 			 	}
 			 	requestAnimationFrame(drawObj);
